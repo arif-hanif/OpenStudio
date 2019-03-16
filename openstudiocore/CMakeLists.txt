@@ -297,6 +297,26 @@ else()
   set(CONAN_GTEST "")
 endif()
 
+if (BUILD_OS_APP)
+  set(CONAN_QT "qt/5.11.3@bincrafters/stable")
+  
+  set(CONAN_OPTIONS "${CONAN_OPTIONS} with_pcre2=True")
+  set(CONAN_OPTIONS "${CONAN_OPTIONS} qtxmlpatterns=True")
+  set(CONAN_OPTIONS "${CONAN_OPTIONS} webchannel=True")
+  set(CONAN_OPTIONS "${CONAN_OPTIONS} qtwebengine=True")
+  if (MSVC)
+    set(CONAN_OPTIONS "${CONAN_OPTIONS} qtwinextras=True")
+  elseif (APPLE)
+    set(CONAN_OPTIONS "${CONAN_OPTIONS} qtmacextras=True")
+  else()
+    set(CONAN_OPTIONS "${CONAN_OPTIONS} qtx11extras=True")
+    set(CONAN_OPTIONS "${CONAN_OPTIONS} with_glib=True")
+    set(CONAN_OPTIONS "${CONAN_OPTIONS} with_harfbuzz=True")
+  endif()
+else()
+  set(CONAN_QT "")
+endif()
+message("CONAN_OPTIONS = ${CONAN_OPTIONS}")
 
 conan_cmake_run(REQUIRES 
   ${CONAN_OPENSSL}
@@ -320,6 +340,7 @@ conan_cmake_run(REQUIRES
   ${CONAN_WEBSOCKETPP}
   geographiclib/1.49@bincrafters/stable
   ${CONAN_GTEST}
+  ${CONAN_QT}
   BASIC_SETUP CMAKE_TARGETS NO_OUTPUT_DIRS
   OPTIONS ${CONAN_OPTIONS}
   BUILD ${CONAN_BUILD}
@@ -994,69 +1015,70 @@ if(BUILD_OS_APP)
   set(QT_INSTALL_DIR "" CACHE PATH "Path to Qt Install")
   mark_as_advanced(QT_INSTALL_DIR)
 
-  if(NOT EXISTS ${QT_INSTALL_DIR})
-    # download qt
-    if(WIN32)
-      if(CMAKE_CL_64)
-        set(QT_ZIP_FILENAME "qt_5_11_msvc2017_64_shared.zip")
-        set(QT_ZIP_EXPECTED_MD5 "82f44a8decf101ca7cb7efafd899e8ee")
-      else()
-        set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_msvc2017_32_shared.zip")
-        set(QT_ZIP_EXPECTED_MD5 "25abd383e7db2dfd971b4a4ef145002b")
-      endif()
-    elseif(APPLE)
-        set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_osx_shared.tar.gz")
-        set(QT_ZIP_EXPECTED_MD5 "326887393d55b5da97a1be9764fb0d1b")
-    elseif(EXISTS "/etc/redhat-release")
-      set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_redhat_shared.tar.gz")
-      set(QT_ZIP_EXPECTED_MD5 "b0610716854ed91a003347c455b22eb8")
-    else()
-      if(LSB_RELEASE_ID_SHORT MATCHES "18.04")
-        set(QT_ZIP_FILENAME "qt_5_11_linux_shared.tar.gz")
-        set(QT_ZIP_EXPECTED_MD5 "33c5a562935612625ec5e41fe4b75e17")
-      else()
-        # 16.04
-        set(QT_ZIP_FILENAME "qt_5_11_linux_shared_xenial.tar.gz")
-        set(QT_ZIP_EXPECTED_MD5 "9b0e89433cf1a79c84f84f85c8fef168")
-      endif()
-    endif()
+  #if(NOT EXISTS ${QT_INSTALL_DIR})
+  #  # download qt
+  #  if(WIN32)
+  #    if(CMAKE_CL_64)
+  #      set(QT_ZIP_FILENAME "qt_5_11_msvc2017_64_shared.zip")
+  #      set(QT_ZIP_EXPECTED_MD5 "82f44a8decf101ca7cb7efafd899e8ee")
+  #    else()
+  #      set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_msvc2017_32_shared.zip")
+  #      set(QT_ZIP_EXPECTED_MD5 "25abd383e7db2dfd971b4a4ef145002b")
+  #    endif()
+  #  elseif(APPLE)
+  #      set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_osx_shared.tar.gz")
+  #      set(QT_ZIP_EXPECTED_MD5 "326887393d55b5da97a1be9764fb0d1b")
+  #  elseif(EXISTS "/etc/redhat-release")
+  #    set(QT_ZIP_FILENAME "DOES_NOT_EXIST_qt_5_11_redhat_shared.tar.gz")
+  #    set(QT_ZIP_EXPECTED_MD5 "b0610716854ed91a003347c455b22eb8")
+  #  else()
+  #    if(LSB_RELEASE_ID_SHORT MATCHES "18.04")
+  #      set(QT_ZIP_FILENAME "qt_5_11_linux_shared.tar.gz")
+  #      set(QT_ZIP_EXPECTED_MD5 "33c5a562935612625ec5e41fe4b75e17")
+  #    else()
+  #      # 16.04
+  #      set(QT_ZIP_FILENAME "qt_5_11_linux_shared_xenial.tar.gz")
+  #      set(QT_ZIP_EXPECTED_MD5 "9b0e89433cf1a79c84f84f85c8fef168")
+  #    endif()
+  #  endif()
+  #
+  #  set(QT_ZIP_LOCAL_PATH "${CMAKE_BINARY_DIR}/${QT_ZIP_FILENAME}")
+  #  if(EXISTS "${QT_ZIP_LOCAL_PATH}")
+  #    file(MD5 "${QT_ZIP_LOCAL_PATH}" QT_ZIP_MD5)
+  #  endif()
+  #
+  #  if(NOT QT_ZIP_MD5 STREQUAL QT_ZIP_EXPECTED_MD5)
+  #    file(DOWNLOAD "http://openstudio-resources.s3.amazonaws.com/dependencies/${QT_ZIP_FILENAME}"
+  #      ${QT_ZIP_LOCAL_PATH}
+  #      INACTIVITY_TIMEOUT 120
+  #      SHOW_PROGRESS
+  #      EXPECTED_MD5 ${QT_ZIP_EXPECTED_MD5})
+  #      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${QT_ZIP_LOCAL_PATH} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+  #  endif()
+  #endif()
 
-    set(QT_ZIP_LOCAL_PATH "${CMAKE_BINARY_DIR}/${QT_ZIP_FILENAME}")
-    if(EXISTS "${QT_ZIP_LOCAL_PATH}")
-      file(MD5 "${QT_ZIP_LOCAL_PATH}" QT_ZIP_MD5)
-    endif()
+  message("CONAN_QT_ROOT = ${CONAN_QT_ROOT}")
+  set(QT_INSTALL_DIR "C:/.conan/4afcbf/1/")
 
-    if(NOT QT_ZIP_MD5 STREQUAL QT_ZIP_EXPECTED_MD5)
-      file(DOWNLOAD "http://openstudio-resources.s3.amazonaws.com/dependencies/${QT_ZIP_FILENAME}"
-        ${QT_ZIP_LOCAL_PATH}
-        INACTIVITY_TIMEOUT 120
-        SHOW_PROGRESS
-        EXPECTED_MD5 ${QT_ZIP_EXPECTED_MD5})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xfz ${QT_ZIP_LOCAL_PATH} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-    endif()
-  endif()
+  find_package(Qt5Core 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Widgets 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Sql 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Network 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Xml 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Concurrent 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5PrintSupport 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Gui 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Quick 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5QuickWidgets 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Qml 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5WebChannel 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5Positioning 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
 
-  set(QT_INSTALL_DIR "${CMAKE_BINARY_DIR}/Qt-install/")
-
-  find_package(Qt5Core 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Widgets 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Sql 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Network 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Xml 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Concurrent 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5PrintSupport 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Gui 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Quick 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5QuickWidgets 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Qml 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5WebChannel 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5Positioning 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-
-  find_package(Qt5WebEngine 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  find_package(Qt5WebEngineWidgets 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  #find_package(Qt53DCore 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  #find_package(Qt53DInput 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
-  #find_package(Qt53DRender 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5WebEngine 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  find_package(Qt5WebEngineWidgets 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  #find_package(Qt53DCore 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  #find_package(Qt53DInput 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+  #find_package(Qt53DRender 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
 
   if(APPLE)
     set(QtWebEngineProcess "${QT_INSTALL_DIR}/lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app" CACHE PATH "Path to the QtWebEngineProcess")
@@ -1082,23 +1104,23 @@ if(BUILD_OS_APP)
 
   if(NOT APPLE)
 
-    find_package(Qt5WebChannel 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5WebChannel 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_WEB_LIBS Qt5::WebChannel)
 
-    find_package(Qt5Quick 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5Quick 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_WEB_LIBS Qt5::Quick)
 
-    find_package(Qt5QuickWidgets 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5QuickWidgets 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_WEB_LIBS Qt5::QuickWidgets)
 
-    find_package(Qt5Qml 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5Qml 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_WEB_LIBS Qt5::Qml)
 
-    find_package(Qt5Positioning 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5Positioning 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_WEB_LIBS Qt5::Positioning)
 
     if(UNIX)
-      find_package(Qt5DBus 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+      find_package(Qt5DBus 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
       list(APPEND QT_WEB_LIBS Qt5::DBus)
 
       # there does not appear to be a normal qt finder for this
@@ -1122,7 +1144,7 @@ if(BUILD_OS_APP)
   list(APPEND QT_LIBS Qt5::Gui)
 
   if(WIN32)
-    find_package(Qt5WinExtras 5.11.2 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
+    find_package(Qt5WinExtras 5.11.3 REQUIRED PATHS ${QT_INSTALL_DIR} NO_DEFAULT_PATH)
     list(APPEND QT_LIBS Qt5::WinExtras)
 
     find_library(QT_MAIN_LIB NAMES qtmain PATHS "${QT_INSTALL_DIR}/lib" NO_DEFAULT_PATH)
@@ -1135,7 +1157,7 @@ if(BUILD_OS_APP)
   list(APPEND QT_INCLUDES ${Qt5Xml_INCLUDE_DIRS})
   list(APPEND QT_INCLUDES ${Qt5Network_INCLUDE_DIRS})
   list(APPEND QT_INCLUDES ${Qt5Gui_INCLUDE_DIRS})
-  list(APPEND QT_INCLUDES "${QT_INSTALL_DIR}/include/QtGui/5.11.2/QtGui") # needed by qtwinmigrate
+  list(APPEND QT_INCLUDES "${QT_INSTALL_DIR}/include/QtGui/5.11.3/QtGui") # needed by qtwinmigrate
   list(APPEND QT_INCLUDES ${Qt5PrintSupport_INCLUDE_DIRS})
 
   # DLM: added this, but seems to conflict with idea of a separate set of Qt Web dependencies?
@@ -1200,7 +1222,7 @@ if(BUILD_OS_APP)
   # list(APPEND QT_STATIC_INCLUDES "${QT_STATIC_INSTALL_DIR}/include/QtXml")
   # list(APPEND QT_STATIC_INCLUDES "${QT_STATIC_INSTALL_DIR}/include/QtNetwork")
   # list(APPEND QT_STATIC_INCLUDES "${QT_STATIC_INSTALL_DIR}/include/QtGui")
-  # list(APPEND QT_STATIC_INCLUDES "${QT_STATIC_INSTALL_DIR}/include/QtGui/5.11.2/QtGui")
+  # list(APPEND QT_STATIC_INCLUDES "${QT_STATIC_INSTALL_DIR}/include/QtGui/5.11.3/QtGui")
 
   # FIND_QT_STATIC_LIB("QtCore;Qt5Core" "${QT_STATIC_INSTALL_DIR}/lib/")
   # FIND_QT_STATIC_LIB("QtWidgets;Qt5Widgets" "${QT_STATIC_INSTALL_DIR}/lib/")
