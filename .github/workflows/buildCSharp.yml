@@ -14,8 +14,10 @@ jobs:
       matrix:
         name: [Ubuntu, macOS, Windows64, Windows]
         include:
-        - name: Ubuntu
+        - name: Ubuntu18.04
           os: ubuntu-18.04
+        - name: Ubuntu20.04
+          os: ubuntu-20.04
         - name: macOS
           os: macos-10.15
         - name: Windows64
